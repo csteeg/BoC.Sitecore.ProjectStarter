@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>BoC.Sitecore.ProjectStarter</id>
+    <version>0.7</version>
+    <authors>Chris van de Steeg</authors>
+    <owners>Chris van de Steeg</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      Kickstart project with a new sitecore instance
+    </description>
+    <copyright>Copyright (C) by Chris van de Steeg</copyright>
+  </metadata>
+  <files>
+
+
+    <file src="tools\**" target="tools" />
+    <file src="content\**" target="content" />
+
+  </files>
+</package>

@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A1E53A8E-E801-44BE-BDA9-2511B3410899}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Debug</RootNamespace>
+    <AssemblyName>Debug</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\temp\output</OutputPath>
+    <BaseIntermediateOutputPath>..\..\temp\</BaseIntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\temp\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ks462.lic" />
+    <None Include="web.Debug.config">
+      <DependentUpon>web.config</DependentUpon>
+    </None>
+    <None Include="web.Release.config">
+      <DependentUpon>web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>61010</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:61010/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <!-- This simple inline task does nothing. -->
+  <UsingTask TaskName="GetSolutionProjects" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    <ParameterGroup>
+      <SolutionFile Required="true" />
+      <Output ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        const string SolutionFolderProjectType = "{2150E333-8FDC-42A3-9474-1A3956D46DE8}";
+        const string ExtractProjectsFromSolutionRegex = @"Project\(""(?<ProjectTypeGUID>.+?)""\)\s*=\s*""(?<ProjectName>.+?)""\s*,\s*""(?<ProjectFile>.+?)""\s*,\s*""(?<ProjectGUID>.+?)""";
+
+            if (!File.Exists(SolutionFile))
+            {
+                Log.LogError("Solution not found", SolutionFile);
+                return false;
+            }
+            string solutionFolder = Path.GetDirectoryName(SolutionFile);
+
+            string solutionText = File.ReadAllText(SolutionFile);
+            MatchCollection matches = Regex.Matches(solutionText, ExtractProjectsFromSolutionRegex);
+            List<ITaskItem> taskItems = new List<ITaskItem>();
+
+            for(int i=0; i<matches.Count; i++)
+            {
+                string projectPathRelativeToSolution = matches[i].Groups["ProjectFile"].Value;
+                string projectPathOnDisk = Path.Combine(solutionFolder, projectPathRelativeToSolution);
+                string projectFile = projectPathRelativeToSolution;
+                string projectName = matches[i].Groups["ProjectName"].Value;
+                string projectGUID = matches[i].Groups["ProjectGUID"].Value;
+                string projectTypeGUID = matches[i].Groups["ProjectTypeGUID"].Value;
+
+                // do not include Solution Folders in output
+                if (projectTypeGUID.Equals(SolutionFolderProjectType, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                ITaskItem project = new TaskItem(projectPathOnDisk);
+                project.SetMetadata("ProjectPath", projectFile);
+                project.SetMetadata("ProjectFullPath", projectPathOnDisk);
+                project.SetMetadata("ProjectName", projectName);
+                project.SetMetadata("ProjectGUID", projectGUID);
+				taskItems.Add(project);
+            }
+
+            Output = taskItems.ToArray();
+            return true;
+]]></Code>
+    </Task>
+  </UsingTask>
+  <UsingTask TaskName="UnZip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    <ParameterGroup>
+      <ZipFile ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
+      <OutputDir Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.IO.Compression.FileSystem" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        System.IO.Compression.ZipFile.ExtractToDirectory(this.ZipFile.ItemSpec, this.OutputDir);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="GetProjectsFromSolution">
+    <GetSolutionProjects SolutionFile="$(SolutionPath)">
+      <Output ItemName="_ProjectFiles" TaskParameter="Output" />
+    </GetSolutionProjects>
+    <ItemGroup>
+      <ProjectFiles Include="@(_ProjectFiles)" Condition="'%(ProjectFullPath)' != '$(MSBuildProjectFullPath)'" />
+    </ItemGroup>
+    <Message Text="'%(ProjectFiles.ProjectFullPath)' == '$(MSBuildProjectFullPath)'" />
+  </Target>
+  <Target Name="ModifyApplicationHost">
+    <PropertyGroup>
+      <IIS_USER_HOME Condition="'$(IIS_USER_HOME)' == ''">$(USERPROFILE)\Documents\IISExpress</IIS_USER_HOME>
+      <ApplicationHostConfig Condition="'$(ApplicationHostConfig)' == ''">$(IIS_USER_HOME)\config\applicationhost.config</ApplicationHostConfig>
+    </PropertyGroup>
+    <XmlPeek XmlInputPath="$(ApplicationHostConfig)" Query="/configuration/system.applicationHost/sites/site/application/virtualDirectory[@physicalPath='$(MSBuildProjectDirectory)']/../../bindings/binding/@bindingInformation">
+      <Output TaskParameter="Result" PropertyName="DevelopmentServerBinding" />
+    </XmlPeek>
+    <XmlPoke Condition="$(DevelopmentServerBinding.Contains(':localhost'))" XmlInputPath="$(ApplicationHostConfig)" Query="/configuration/system.applicationHost/sites/site/application/virtualDirectory[@physicalPath='$(MSBuildProjectDirectory)']/../../bindings/binding/@bindingInformation" Value="$(DevelopmentServerBinding.Replace(':localhost', ':'))" />
+    <Message Text="Current DevelopmentServerPort: $(DevelopmentServerBinding)" />
+    <!--Message Text="Current config file content:" />
+      <Message Text="$(ConfigContent)" /-->
+  </Target>
+  <Target Name="Build" DependsOnTargets="ModifyApplicationHost;GetProjectsFromSolution">
+    <Message Text="Current solution = $(SolutionPath)" />
+    <Message Text="Current solutionfolder = $(SolutionDir)" />
+    <MSBuild Projects="%(ProjectFiles.ProjectFullPath)" Targets="PipelinePreDeployCopyAllFilesToOneFolder" Properties="Configuration=$(Configuration);_PackageTempDir=$(OutDir)%(ProjectFiles.ProjectName);PackageAsSingleFile=False" ContinueOnError="false" />
+    <ItemGroup>
+      <DeployFiles Include="$(OutDir)%(ProjectFiles.ProjectName)\**\*.*" Exclude="$(OutDir)%(ProjectFiles.ProjectName)\bin\**;$(OutDir)%(ProjectFiles.ProjectName)\web.config;$(OutDir)%(ProjectFiles.ProjectName)\packages.config" />
+      <BinFiles Include="$(OutDir)%(ProjectFiles.ProjectName)\bin\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <FilesToDelete Include="@(DeployFiles->'$(MSBuildThisFileDirectory)%(RecursiveDir)%(Filename)%(Extension)')" />
+      <FolderStructure Include="@(DeployFiles->'$(MSBuildThisFileDirectory)%(RecursiveDir)')" />
+    </ItemGroup>
+    <PropertyGroup>
+      <SrcFolder>$([System.IO.Path]::GetDirectoryName('%(ProjectFiles.ProjectFullPath)'))</SrcFolder>
+    </PropertyGroup>
+    <!--RemoveDuplicates Inputs="@(FolderStructure)">
+      <Output TaskParameter="Filtered" ItemName="UniqueDirs"/>
+    </RemoveDuplicates-->
+    <Delete Files="@(FilesToDelete)" />
+    <MakeDir Directories="@(FolderStructure)" />
+    <Exec Command="mklink &quot;$(MSBuildThisFileDirectory)%(DeployFiles.RecursiveDir)%(DeployFiles.Filename)%(DeployFiles.Extension)&quot; &quot;$(SrcFolder)\%(DeployFiles.RecursiveDir)%(DeployFiles.Filename)%(DeployFiles.Extension)&quot;" />
+    <Copy SourceFiles="@(BinFiles)" DestinationFiles="@(BinFiles -> '$(MSBuildThisFileDirectory)bin\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="True" />
+    <Copy SourceFiles="$(OutDir)%(ProjectFiles.ProjectName)\web.config" DestinationFolder="$(MSBuildThisFileDirectory)" SkipUnchangedFiles="True" />
+    <MakeDir Directories="$(MSBuildThisFileDirectory)sitecore\shell\override" Condition="!Exists('$(MSBuildThisFileDirectory)sitecore\shell\override')" />
+  </Target>
+  <Target Name="Clean">
+    <Message Text="Cleaning sitecore installation" />
+    <ItemGroup>
+      <SelectFile Include="$(SolutionDir)packages\BoC.Sitecore.ProjectStarter*\tools\SelectFile.exe" />
+    </ItemGroup>
+    <PropertyGroup>
+      <SelectFileOutput>$([System.Guid]::NewGuid().ToString().Replace("{", "").Replace("-", "").Replace("}", ""))</SelectFileOutput>
+    </PropertyGroup>
+    <!--Delete Files="@(FilesToDelete)" /-->
+    <Message Condition="!Exists('$(SolutionDir)temp\extracted')" Text="Toolspath: %(SelectFile.FullPath) =&gt; $(SolutionDir)packages\BoC.Sitecore.ProjectStarter.*.*\tools\SelectFile.exe" />
+    <Exec Condition="!Exists('$(SolutionDir)temp\extracted')" command="%(SelectFile.FullPath) &quot;Zip files (*.zip)| *.zip&quot; &quot;Select sitecore zip installation&quot; &gt; $(SolutionDir)temp\$(SelectFileOutput)" />
+    <PropertyGroup Condition="Exists('$(SolutionDir)temp\$(SelectFileOutput)')">
+      <Sitecorezip>$([System.IO.File]::ReadAllText("$(SolutionDir)temp\$(SelectFileOutput)").Trim())</Sitecorezip>
+    </PropertyGroup>
+    <Delete Condition="Exists('$(SolutionDir)temp\$(SelectFileOutput)')" Files="$(SolutionDir)temp\$(SelectFileOutput)" ContinueOnError="true" />
+    <Message Condition="!Exists('$(SolutionDir)temp\extracted')" Text="Extracting Sitecorezip: $(Sitecorezip) to $(SolutionDir)temp\extracted" />
+    <Unzip Condition="!Exists('$(SolutionDir)temp\extracted')" ZipFile="$(Sitecorezip)" OutputDir="$(SolutionDir)temp\extracted" />
+    <PropertyGroup Condition="Exists('$(SolutionDir)temp\extracted')">
+      <ExtractedFolder>$([System.IO.Directory]::GetDirectories('$(SolutionDir)temp\extracted')[0])</ExtractedFolder>
+    </PropertyGroup>
+    <Message Text="Copying self ($(MSBuildThisFileFullPath)) to $(ExtractedFolder)\website" Condition="Exists($(ExtractedFolder))" />
+    <Move SourceFiles="$(MSBuildThisFileFullPath)" DestinationFolder="$(ExtractedFolder)\website" Condition="Exists($(ExtractedFolder))" />
+    <RemoveDir Directories="$(SolutionDir)build" Condition="Exists($(ExtractedFolder))" ContinueOnError="True" />
+    <RemoveDir Directories="$(SolutionDir)build" Condition="Exists($(ExtractedFolder))" ContinueOnError="True" />
+    <ItemGroup Condition="Exists($(ExtractedFolder))">
+      <Extracted Include="$(ExtractedFolder)\**\*.*" />
+    </ItemGroup>
+    <Message Text="Copying $(ExtractedFolder)\ to $(SolutionDir)build" Condition="Exists($(ExtractedFolder))" />
+    <Copy SkipUnchangedFiles="True" SourceFiles="@(Extracted)" DestinationFiles="@(Extracted -> '$(SolutionDir)build\%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists($(ExtractedFolder))" />
+    <ItemGroup Condition="Exists($(ExtractedFolder))">
+      <Databases Include="$(SolutionDir)build\Databases\*.*" />
+    </ItemGroup>
+    <Move SourceFiles="@(Databases)" DestinationFolder="$(SolutionDir)build\Website\App_Data" Condition="Exists($(ExtractedFolder))" />
+    <PropertyGroup>
+      <SelectFileOutput>$([System.Guid]::NewGuid().ToString().Replace("{", "").Replace("-", "").Replace("}", ""))</SelectFileOutput>
+    </PropertyGroup>
+    <Exec Condition="!Exists('$(SolutionDir)build\data\license.xml')" command="%(SelectFile.FullPath) &quot;Sitecore license file (license.xml)| license.xml&quot; &quot;Select sitecore license file&quot; &gt; $(SolutionDir)temp\$(SelectFileOutput)" />
+    <PropertyGroup Condition="!Exists('$(SolutionDir)build\data\license.xml')">
+      <Sitecorelicense>$([System.IO.File]::ReadAllText("$(SolutionDir)temp\$(SelectFileOutput)").Trim())</Sitecorelicense>
+    </PropertyGroup>
+    <Message Text="Copying $(Sitecorelicense) to $(SolutionDir)build\data\license.xml" />
+    <Copy SkipUnchangedFiles="True" SourceFiles="$(Sitecorelicense)" DestinationFiles="$(SolutionDir)build\data\license.xml" Condition="Exists($(Sitecorelicense))" />
+    <Delete Condition="Exists('$(SolutionDir)temp\$(SelectFileOutput)')" Files="$(SolutionDir)temp\$(SelectFileOutput)" ContinueOnError="true" />
+  </Target>
+</Project>
