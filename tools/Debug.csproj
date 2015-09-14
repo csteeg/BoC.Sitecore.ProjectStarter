@@ -15,11 +15,12 @@
     <RootNamespace>Debug</RootNamespace>
     <AssemblyName>Debug</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <UseIISExpress>False</UseIISExpress>
+    <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -81,7 +82,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>61010</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>http://vvv.localhost.efocus.local/</IISUrl>
+          <IISUrl>http://localhost:61010/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
@@ -205,23 +206,22 @@
     <Message Text="Current solutionfolder = $(SolutionDir)" />
     <Message Text="MSBuildThisFileFullPath = $(MSBuildThisFileFullPath)" />
     <Message Text="Empty targets file = $(emptyTargetFile)" />
-    <MSBuild Projects="%(ProjectFiles.ProjectFullPath)" Targets="PipelinePreDeployCopyAllFilesToOneFolder" Properties="CustomBeforeMicrosoftCommonTargets=$(emptyTargetFile);Configuration=$(Configuration);_PackageTempDir=$(OutDir)%(ProjectFiles.ProjectName);PackageAsSingleFile=False;CreateHardLinksForCopyFilesToOutputDirectoryIfPossible=True;CreateHardLinksForCopyAdditionalFilesIfPossible=True;CreateHardLinksForCopyLocalIfPossible=True;CreateHardLinksForPublishFilesIfPossible=True;" 
-      ContinueOnError="False" />
+    <MSBuild Projects="%(ProjectFiles.ProjectFullPath)" Targets="PipelinePreDeployCopyAllFilesToOneFolder" Properties="CustomBeforeMicrosoftCommonTargets=$(emptyTargetFile);Configuration=$(Configuration);_PackageTempDir=$(OutDir)%(ProjectFiles.ProjectName);PackageAsSingleFile=False;CreateHardLinksForCopyFilesToOutputDirectoryIfPossible=True;CreateHardLinksForCopyAdditionalFilesIfPossible=True;CreateHardLinksForCopyLocalIfPossible=True;CreateHardLinksForPublishFilesIfPossible=True;" ContinueOnError="False" />
     <ItemGroup>
       <DeployFiles Include="$(OutDir)%(ProjectFiles.ProjectName)\**\*.*" Exclude="$(OutDir)%(ProjectFiles.ProjectName)\web.config;$(OutDir)%(ProjectFiles.ProjectName)\packages.config" />
       <!--BinFiles Include="$(OutDir)%(ProjectFiles.ProjectName)\bin\**" /-->
       <!--DeployFiles Include="$(OutDir)%(ProjectFiles.ProjectName)\**\*.*" Exclude="$(OutDir)%(ProjectFiles.ProjectName)\bin\**;$(OutDir)%(ProjectFiles.ProjectName)\web.config;$(OutDir)%(ProjectFiles.ProjectName)\packages.config" /-->
     </ItemGroup>
     <Message Text="Resetting file attributes for config files" Condition="'$(SkipSitecore)' == 'False'" />
-    <Exec Command="attrib /S /D /L -H &quot;$(SolutionDir)build\website\App_Config\*.*&quot;" Condition="Exists('$(SolutionDir)build\website\App_Config')"/>
+    <Exec Command="attrib /S /D /L -H &quot;$(SolutionDir)build\website\App_Config\*.*&quot;" Condition="Exists('$(SolutionDir)build\website\App_Config')" />
     <!--PropertyGroup>
       <SrcFolder>$([System.IO.Path]::GetDirectoryName('%(ProjectFiles.ProjectFullPath)'))</SrcFolder>
     </PropertyGroup-->
     <!--ItemGroup-->
-      <!--TargetFiles Include="@(DeployFiles->'$(MSBuildThisFileDirectory)%(RecursiveDir)%(Filename)%(Extension)')" /-->
-      <!--FolderStructure Include="@(DeployFiles->'$(MSBuildThisFileDirectory)%(RecursiveDir)')" /-->
-      <!--SrcFiles Include="@(DeployFiles->'%(RelativeDir)%(Filename)%(Extension)'->Replace('$(OutDir)', '$(SolutionDir)src\'))" /-->
-      <!--LinkCommands Include="@(DeployFiles->'mklink /H &quot;$(MSBuildThisFileDirectory)%(RecursiveDir)%(Filename)%(Extension)&quot; &quot;%(RelativeDir)%(Filename)%(Extension)&quot;'->Replace('$(OutDir)', '$(SolutionDir)src\'))" /-->
+    <!--TargetFiles Include="@(DeployFiles->'$(MSBuildThisFileDirectory)%(RecursiveDir)%(Filename)%(Extension)')" /-->
+    <!--FolderStructure Include="@(DeployFiles->'$(MSBuildThisFileDirectory)%(RecursiveDir)')" /-->
+    <!--SrcFiles Include="@(DeployFiles->'%(RelativeDir)%(Filename)%(Extension)'->Replace('$(OutDir)', '$(SolutionDir)src\'))" /-->
+    <!--LinkCommands Include="@(DeployFiles->'mklink /H &quot;$(MSBuildThisFileDirectory)%(RecursiveDir)%(Filename)%(Extension)&quot; &quot;%(RelativeDir)%(Filename)%(Extension)&quot;'->Replace('$(OutDir)', '$(SolutionDir)src\'))" /-->
     <!--/ItemGroup-->
     <!--RemoveDuplicates Inputs="@(FolderStructure)">
       <Output TaskParameter="Filtered" ItemName="UniqueDirs"/>
@@ -275,7 +275,6 @@
     </ItemGroup>
     <Delete Files="@(ClearSitecore)" Condition="'$(SkipSitecore)' == 'True' OR Exists($(ExtractedFolder))" ContinueOnError="True" />
     <Delete Files="@(ClearSitecore)" Condition="'$(SkipSitecore)' == 'True' OR Exists($(ExtractedFolder))" ContinueOnError="True" />
-
     <ItemGroup Condition="'$(SkipSitecore)' == 'False' AND Exists($(ExtractedFolder))">
       <Extracted Include="$(ExtractedFolder)\**\*.*" Exclude="$(ExtractedFolder)\data\*.*;$(ExtractedFolder)\data\**\*.*" Condition="Exists('$(SolutionDir)build\data')" />
       <Extracted Include="$(ExtractedFolder)\**\*.*" Condition="!Exists('$(SolutionDir)build\data')" />
@@ -284,7 +283,7 @@
     <Copy SkipUnchangedFiles="True" SourceFiles="@(Extracted)" DestinationFiles="@(Extracted -> '$(SolutionDir)build\%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(SkipSitecore)' == 'False' AND Exists($(ExtractedFolder))" />
     <ItemGroup Condition="Exists($(ExtractedFolder))">
       <ExistingDatabases Include="$(SolutionDir)build\Website\App_Data\*.*" />
-      <Databases Include="$(SolutionDir)build\Databases\*.*" Exclude="@(ExistingDatabases -> '$(SolutionDir)build\Databases\%(FileName)%(Extension)')"/>
+      <Databases Include="$(SolutionDir)build\Databases\*.*" Exclude="@(ExistingDatabases -> '$(SolutionDir)build\Databases\%(FileName)%(Extension)')" />
     </ItemGroup>
     <Message Text="Copying databases @(Databases)" Condition="'$(SkipSitecore)' == 'False' AND Exists($(ExtractedFolder))" />
     <Copy SourceFiles="@(Databases)" DestinationFolder="$(SolutionDir)build\Website\App_Data" Condition="'$(SkipSitecore)' == 'False' AND Exists($(ExtractedFolder))" />
@@ -298,12 +297,10 @@
     <Message Condition="'$(SkipSitecore)' == 'False'" Text="Copying $(Sitecorelicense) to $(SolutionDir)build\data\license.xml" />
     <Copy SkipUnchangedFiles="True" SourceFiles="$(Sitecorelicense)" DestinationFiles="$(SolutionDir)build\data\license.xml" Condition="'$(SkipSitecore)' == 'False' AND Exists($(Sitecorelicense))" />
     <Delete Condition="Exists('$(SolutionDir)temp\$(SelectFileOutput)')" Files="$(SolutionDir)temp\$(SelectFileOutput)" ContinueOnError="true" />
-    
     <!-- copying modules -->
     <ItemGroup>
       <DeployModules Include="$(SolutionDir)SitecoreModules\**" />
     </ItemGroup>
     <Msbuild Targets="CopySitecoreModule" Projects="$(MSBuildProjectFile)" Properties="ItemFullPath=%(DeployModules.FullPath);TargetPath=%(DeployModules.RecursiveDir)%(DeployModules.Filename)%(DeployModules.Extension)" />
-
   </Target>
 </Project>

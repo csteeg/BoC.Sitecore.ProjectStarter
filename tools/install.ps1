@@ -79,10 +79,15 @@ if (!$debugFolderProject)
     $debugFolderProject = $solution.AddSolutionFolder("_debug")
 }
 $debugFolder = Get-Interface $debugFolderProject.Object ([EnvDTE80.SolutionFolder])
-
 if ($solutionPath -eq $projectParentPath){
     Write-Host "Moving project to src folder"
     $project.Save()
+    $isvs2015proj = $project.Object.References.Item("Microsoft.CodeDom.Providers.DotNetCompilerPlatform")
+    if ($isvs2015proj) {
+      Uninstall-Package Microsoft.CodeDom.Providers.DotNetCompilerPlatform -ProjectName $project.Name
+      Uninstall-Package Microsoft.Net.Compilers -ProjectName $project.Name
+    }
+    
     $newProjectFile = $project.FullName.Replace($solutionPath, $solutionPath+"\src")
     $newProjectPath = [System.IO.Path]::GetDirectoryName($newProjectFile)
     Write-Host "New project file will be "$newProjectFile" in "$newProjectPath
@@ -97,6 +102,11 @@ if ($solutionPath -eq $projectParentPath){
     $debugProjItem = $debugFolder.AddFromFile($debugProj) 
     $project = $solution.AddFromFile($newProjectFile)
     $projectPath = $newProjectPath
+    
+    if ($isvs2015proj) {
+      Install-Package Microsoft.CodeDom.Providers.DotNetCompilerPlatform -ProjectName $project.Name
+    }
+    
 } else {
     $debugProjItem = $debugFolder.AddFromFile($debugProj) 
 }
@@ -129,6 +139,7 @@ Install-Package BoC.Persistence.SitecoreGlass -ProjectName $project.Name
 Install-Package BoC.InversionOfControl.SimpleInjector -ProjectName $project.Name
 Install-Package Efocus.Sitecore.ConditionalConfig -ProjectName $project.Name
 Install-Package BoC.Sitecore.CodeFirstRenderings -ProjectName $project.Name
+Install-Package BoC.Sitecore.Mvc -ProjectName $project.Name
 Install-Package Unicorn -ProjectName $project.Name
 Install-Package Sitecore.Ship -ProjectName $project.Name
 $project.ProjectItems.Item("App_Start").ProjectItems.Item("GlassMapperScCustom.cs").Delete()
