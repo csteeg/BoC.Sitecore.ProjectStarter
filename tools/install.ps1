@@ -18,6 +18,7 @@ Write-Host "buildPath: "$buildPath
 Write-Host "tempfolder: "$tempfolder
 Write-Host "selectFileExe: "$selectFileExe
 
+Write-Host "Select your sitecore zip file (press ALT+TAB if you don't see an open-file dialog)"
 $sitecoreZip = (& $selectFileExe "Zip files (*.zip)| *.zip" "Select sitecore zip installation") | Out-String
 $sitecoreZip = $sitecoreZip.Trim()
 Write-Host "sitecoreZip: "$sitecoreZip
@@ -34,7 +35,8 @@ If (Test-Path -LiteralPath $buildPath){
 Write-Host "Creating build folder structure"
 $extracted = Get-ChildItem $tempfolder -name
 $extracted = $tempfolder + "\" + $extracted
-Copy-Item -LiteralPath $extracted -destination $buildPath -Force
+Write-Host "Copying "$extracted" to "$buildPath
+Copy-Item -LiteralPath $extracted -destination $buildPath -Force -Recurse
 #Remove-Item -recurse -force -LiteralPath $tempfolder
 
 Write-Host "Moving databases to App_Data folder"
@@ -48,11 +50,12 @@ Copy-Item -LiteralPath $toolsPath"\Debug.csproj" -Recurse -destination $debugPro
 Copy-Item -LiteralPath $buildPath"\website\web.config"  -destination $projectPath"\web.config" -Force
 
 if (!$licenseFile){
+    Write-Host "Select your license file (press ALT+TAB if you don't see an open-file dialog)"
     $licenseFile = (& $selectFileExe "Sitecore license file (license.xml)| license.xml" "Select sitecore license file") | Out-String
     $licenseFile = $licenseFile.Trim()
 }
 Copy-Item -LiteralPath $licenseFile -destination $buildPath"\data\license.xml" -Force
-Copy-Item -LiteralPath $licenseFile -destination $tempfolder"\data\license.xml" -Force
+Copy-Item -LiteralPath $licenseFile -destination $extracted"\data\license.xml" -Force
 
 Write-Host "Setting machinename '"$env:COMPUTERNAME"' to conditions in config files"
 $replace = 'condition-machineName="' + $env:COMPUTERNAME+ '"'
@@ -103,9 +106,31 @@ Write-Host "Adding reference to "$kerneldll
 $project.Object.References.Add($kerneldll)
 $project.Object.References.Item("sitecore.kernel").CopyLocal = "False"
 
+$mvcdll = $buildPath + "\website\bin\sitecore.mvc.dll"
+Write-Host "Adding reference to "$mvcdll
+$project.Object.References.Add($mvcdll)
+$project.Object.References.Item("sitecore.mvc").CopyLocal = "False"
+
+$mvcanadll = $buildPath + "\website\bin\Sitecore.Mvc.Analytics.dll"
+Write-Host "Adding reference to "$mvcanadll
+$project.Object.References.Add($mvcanadll)
+$project.Object.References.Item("Sitecore.Mvc.Analytics").CopyLocal = "False"
+
+$analyticsdll = $buildPath + "\website\bin\Sitecore.Analytics.dll"
+Write-Host "Adding reference to "$analyticsdll
+$project.Object.References.Add($analyticsdll)
+$project.Object.References.Item("Sitecore.Analytics").CopyLocal = "False"
+
+Write-Host "Making "$debugProjItem.UniqueName" dependent on "$project.UniqueName
+$buildDependency = $solution.SolutionBuild.BuildDependencies.Item($debugProjItem.UniqueName)
+$buildDependency.AddProject($project.UniqueName)
+
 Install-Package BoC.Persistence.SitecoreGlass -ProjectName $project.Name
 Install-Package BoC.InversionOfControl.SimpleInjector -ProjectName $project.Name
 Install-Package Efocus.Sitecore.ConditionalConfig -ProjectName $project.Name
+Install-Package BoC.Sitecore.CodeFirstRenderings -ProjectName $project.Name
+Install-Package Unicorn -ProjectName $project.Name
+Install-Package Sitecore.Ship -ProjectName $project.Name
 $project.ProjectItems.Item("App_Start").ProjectItems.Item("GlassMapperScCustom.cs").Delete()
 
 Copy-Item -LiteralPath $toolsPath"\Content\Web.Debug.config" -destination $projectPath -Force
