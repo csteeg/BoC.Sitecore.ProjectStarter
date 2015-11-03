@@ -1,5 +1,10 @@
-﻿@using System.Web.Optimization
+﻿@using $rootnamespace$.Models
+
+@using System.Web.Mvc.Html
+@using System.Web.Optimization
 @using Glass.Mapper.Sc
+@using Glass.Mapper.Sc.Web.Mvc
+@using Sitecore.Configuration
 @using Sitecore.Diagnostics
 @using Sitecore.Mvc
 @{
@@ -24,13 +29,13 @@
 <!--[if (gt IE 9)|!(IE)]><!-->
 <html lang="@Sitecore.Context.Site.Language" class=" no-js">
 <!--<![endif]-->
-@{ Html.RenderPartial("MetaData"); }
+@{ Html.RenderPartial("MetaData", Html.Glass().SitecoreContext.GetCurrentItem<ISitecorePage>()); }
 <body ontouchstart="" class="@editingClass">
     <div class="viewport">
         @Html.Sitecore().Placeholder("header")
         <div class="content">
             <div class="container">
-                @Html.Sitecore().Placeholder("rows")
+                @Html.Sitecore().Placeholder("content")
             </div>
         </div>
 

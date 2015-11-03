@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>BoC.Sitecore.ProjectStarter</id>
-    <version>1.4.1</version>
+    <version>1.4.4</version>
     <authors>Chris van de Steeg</authors>
     <owners>Chris van de Steeg</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

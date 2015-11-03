@@ -1,4 +1,4 @@
-﻿@inherits Glass.Mapper.Sc.Web.Mvc.GlassView<VVV.Framework.Models.ISitecorePage>
+﻿@inherits Glass.Mapper.Sc.Web.Mvc.GlassView<$rootnamespace$.Models.ISitecorePage>
 @{
     var stylesheet = string.Format("/areas/{0}/css/{0}.css", Sitecore.Context.Site.Name);
 #if DEBUG
