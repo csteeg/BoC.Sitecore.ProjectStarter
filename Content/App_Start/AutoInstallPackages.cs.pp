@@ -17,7 +17,9 @@ namespace $rootnamespace$
     using Sitecore.Install.Files;
     using Sitecore.Install.Framework;
     using Sitecore.Install.Items;
+    using Sitecore.Install.Metadata;
     using Sitecore.Install.Utils;
+    using Sitecore.Install.Zip;
     using Sitecore.SecurityModel;
     using Sitecore.Sites;
 
@@ -117,7 +119,7 @@ namespace $rootnamespace$
                 + "</div>\r\n    </div>\r\n  </div>\r\n  <br>\r\n  \r\n</div>";
         }
 
-        protected static void Install(string package)
+       protected static void Install(string package)
         {
             IProcessingContext context = new SimpleProcessingContext();
             IItemInstallerEvents instance = new DefaultItemInstallerEvents(new BehaviourOptions(InstallMode.Merge, MergeMode.Merge));
@@ -125,7 +127,18 @@ namespace $rootnamespace$
             IFileInstallerEvents events = new DefaultFileInstallerEvents(true);
             context.AddAspect<IFileInstallerEvents>(events);
 
-            new Installer().InstallPackage(package, context);
+            var installer = new Installer();
+            installer.InstallPackage(package, context);
+            
+            //run poststep:
+            ISource<PackageEntry> source = new PackageReader(package);
+            var previewContext = Installer.CreatePreviewContext();
+            var view = new MetadataView(previewContext);
+            var metadataSink = new MetadataSink(view);
+            metadataSink.Initialize(previewContext);
+            source.Populate(metadataSink);
+            if (view.PostStep != null)
+                installer.ExecutePostStep(view.PostStep, previewContext);
         }
-    }
+	}
 }
