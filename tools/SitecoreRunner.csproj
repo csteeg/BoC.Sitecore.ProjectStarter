@@ -258,7 +258,8 @@
     <TransformXml Source="%(XmlTransForms.TargetFullPath)"
               Transform="%(XmlTransForms.FullPath)"
               Destination="%(XmlTransForms.TargetFullPath)"
-              />
+			  Condition="'$(%(XmlTransForms.TargetFullPath))' != '' and '$(%(XmlTransForms.FullPath))' != ''"
+	  />
 
   </Target>
   <Target Name="CopySitecoreModule">

@@ -183,7 +183,7 @@ if ($hasform) {
 	if (!(Test-Path -LiteralPath "$wffmZip")){
 		Write-Host "No wffm zip file present!"
 	} else {
-		$wffmfolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($solutionPath, "SitecoreModules\Wffm\"))
+		$wffmfolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($solutionPath, "SitecorePackages\Wffm\"))
 		if (Test-Path -LiteralPath "$wffmfolder"){
 			Remove-Item -recurse -force -LiteralPath $wffmfolder
 		}
@@ -197,9 +197,9 @@ if ($hasform) {
 		if ($extractedwffm1 -eq "package.zip"){
 			$packagezip = $extractedwffm1
 		} else {
-			$extractedwffm1 = [System.IO.Path]::Combine($wffmtempfolder, $extractedwffm1)
+			$wffmZip = [System.IO.Path]::Combine($wffmtempfolder, $extractedwffm1)
 			Write-Host "Extracting wffm from $extractedwffm1 to $wffmstep1folder"
-			[System.IO.Compression.ZipFile]::ExtractToDirectory($extractedwffm1, $wffmstep1folder)
+			[System.IO.Compression.ZipFile]::ExtractToDirectory($wffmZip, $wffmstep1folder)
 
 			$packagezip = [System.IO.Path]::Combine($wffmstep1folder, "package.zip")
 		}
@@ -207,7 +207,7 @@ if ($hasform) {
 		#use custom unzip, package.zip has problems extracting: http://stackoverflow.com/questions/24941741/zip-entry-name-ends-in-directory-separator-character-but-contains-data
 		Unzip $packagezip $wffmstep2folder "files"
 		Copy-Item "$wffmstep2folder\files\bin\**" $sitecoreLibPath
-		Move-Item "$wffmstep2folder\files\**" "$wffmfolder"
+		Move-Item $wffmzip "$wffmfolder"
 		Remove-Item -recurse -force -LiteralPath $wffmtempfolder
 		Remove-Item -recurse -force -LiteralPath $wffmstep2folder
 		Remove-Item -recurse -force -LiteralPath $wffmstep1folder

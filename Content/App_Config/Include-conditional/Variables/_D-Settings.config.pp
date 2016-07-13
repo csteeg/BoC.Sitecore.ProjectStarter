@@ -9,6 +9,16 @@
     <settings>
       <setting name="SomeSetting" set:value="false" />
       <setting name="BoC.Profiler.Enabled" set:value="true" />
+      <setting name="AutoInstallPackages.Folder" set:value="~/../../SitecorePackages" />
+    </settings>
+
+    <pipelines>
+      <httpRequestBegin>
+        <processor type="$rootnamespace$.AutoInstallPackages, $AssemblyName$" patch:before="processor[1]" />
+      </httpRequestBegin>
+    </pipelines>
+    <settings>
+      <setting name="Sitecore.Foundation.Installer.RestoreMongo" value="true"/>
     </settings>
   </sitecore>
 </configuration>
