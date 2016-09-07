@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
@@ -137,8 +137,8 @@
                 string projectGUID = matches[i].Groups["ProjectGUID"].Value;
                 string projectTypeGUID = matches[i].Groups["ProjectTypeGUID"].Value;
 
-                // do not include Solution Folders in output
-                if (projectTypeGUID.Equals(SolutionFolderProjectType, StringComparison.OrdinalIgnoreCase))
+                // do not include Solution Folders in output and tests
+                if (projectTypeGUID.Equals(SolutionFolderProjectType, StringComparison.OrdinalIgnoreCase) || projectName.EndsWith(".Tests"))
                 {
                     continue;
                 }
@@ -158,26 +158,54 @@
   </UsingTask>
   <UsingTask TaskName="SetTargetConfigs" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
     <ParameterGroup>
-	  <TargetRoot ParameterType="System.String" Required="true" />
+      <TargetRoot ParameterType="System.String" Required="true" />
+      <CheckDeployFolder ParameterType="System.String" Required="false" />
       <TransformFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
       <TargetFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+      <SkipSc ParameterType="System.String" Required="false" />
     </ParameterGroup>
     <Task>
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
+      <Code Type="Fragment" Language="cs"><![CDATA[
 		
 		TargetFiles = TransformFiles.Select(item => 
 		{
 			var relDir = System.IO.Path.Combine(item.GetMetadata("RelativeDir"), item.GetMetadata("Filename")) + item.GetMetadata("Extension");
-			var fullPath = Path.Combine(TargetRoot, relDir.Substring(relDir.IndexOf("\\code\\") + "\\code\\".Length).Replace(".transform", ""));
+			var codeIndex = relDir.IndexOf("\\code\\");
+			if (codeIndex < 0)
+			{
+				codeIndex = relDir.IndexOf("\\deploy-");
+				if (codeIndex >= 0)
+				{
+					if (this.CheckDeployFolder != null && this.CheckDeployFolder != "" && (this.SkipSc == null || this.SkipSc == "False"))
+					{
+						//check if package was installed
+						var packagename = relDir.Substring(codeIndex+"\\deploy-".Length);
+						if (packagename.IndexOf("\\") > 0)
+						{
+							packagename = packagename.Substring(0, packagename.IndexOf("\\"));
+						}
+						Log.LogMessage("Checking if Package "+ packagename + " has been installed", MessageImportance.High);
+						if (System.IO.Directory.GetFiles(this.CheckDeployFolder, packagename + ".*").Length == 0)
+						{
+							Log.LogMessage("Package "+ packagename + " not yet installed, skipping xml transforms", MessageImportance.High);
+							item.SetMetadata("TargetFullPath", "");
+							return item;
+						}
+					}
+					codeIndex = relDir.IndexOf("\\", relDir.IndexOf("\\", codeIndex)+1);
+				}
+			} else {
+				 codeIndex += "\\code\\".Length;
+			}
+			var fullPath = Path.Combine(TargetRoot, codeIndex >=0 ? relDir.Substring(codeIndex).TrimStart('\\') : relDir.TrimStart('\\'));
+			fullPath = fullPath.Substring(0, fullPath.LastIndexOf(".transform"));
 			item.SetMetadata("TargetFullPath", fullPath);
+			Log.LogMessage("Reldir: "+ relDir + " => " + fullPath, MessageImportance.High);
 			return item;
 		}).ToArray();
-        ]]>
-      </Code>
+        ]]></Code>
     </Task>
   </UsingTask>
-  
   <UsingTask TaskName="UnZip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
     <ParameterGroup>
       <ZipFile ParameterType="Microsoft.Build.Framework.ITaskItem" Required="true" />
@@ -226,49 +254,57 @@
     <Message Text="Current solutionfolder = $(SolutionDir)" />
     <Message Text="MSBuildThisFileFullPath = $(MSBuildThisFileFullPath)" />
     <Message Text="Empty targets file = $(emptyTargetFile)" />
-
-	<MSBuild Projects="%(ProjectFiles.ProjectFullPath)" Targets="PipelinePreDeployCopyAllFilesToOneFolder" Properties="CustomBeforeMicrosoftCommonTargets=$(emptyTargetFile);Configuration=$(Configuration);_PackageTempDir=$(OutDir)%(ProjectFiles.ProjectName);PackageAsSingleFile=False;CreateHardLinksForCopyFilesToOutputDirectoryIfPossible=True;CreateHardLinksForCopyAdditionalFilesIfPossible=True;CreateHardLinksForCopyLocalIfPossible=True;CreateHardLinksForPublishFilesIfPossible=True;" ContinueOnError="False" />
+    <MSBuild Projects="%(ProjectFiles.ProjectFullPath)" Targets="PipelinePreDeployCopyAllFilesToOneFolder" Properties="CustomBeforeMicrosoftCommonTargets=$(emptyTargetFile);Configuration=$(Configuration);_PackageTempDir=$(OutDir)%(ProjectFiles.ProjectName);PackageAsSingleFile=False;CreateHardLinksForCopyFilesToOutputDirectoryIfPossible=True;CreateHardLinksForCopyAdditionalFilesIfPossible=True;CreateHardLinksForCopyLocalIfPossible=True;CreateHardLinksForPublishFilesIfPossible=True;" ContinueOnError="False" />
     <ItemGroup>
       <DeployFiles Include="$(OutDir)%(ProjectFiles.ProjectName)\**\*.*" Exclude="$(OutDir)%(ProjectFiles.ProjectName)\web.config;$(OutDir)%(ProjectFiles.ProjectName)\packages.config" />
     </ItemGroup>
     <Message Text="Resetting file attributes for config files" Condition="'$(SkipSitecore)' == 'False'" />
     <Exec Command="attrib /S /D /L -H &quot;$(SolutionDir)build\website\App_Config\*.*&quot;" Condition="Exists('$(SolutionDir)build\website\App_Config')" />
     <Copy SourceFiles="@(DeployFiles)" DestinationFiles="@(DeployFiles -> '$(MSBuildThisFileDirectory)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="True" />
-    <Copy SourceFiles="$(OutDir)%(ProjectFiles.ProjectName)\web.config" Condition="Exists('$(OutDir)%(ProjectFiles.ProjectName)\web.config')" DestinationFolder="$(MSBuildThisFileDirectory)" SkipUnchangedFiles="True" UseHardLinksIfPossible="True" />
+    <Copy SourceFiles="$(OutDir)%(ProjectFiles.ProjectName)\web.config" Condition="Exists('$(OutDir)%(ProjectFiles.ProjectName)\web.config')" DestinationFolder="$(MSBuildThisFileDirectory)" SkipUnchangedFiles="True" UseHardLinksIfPossible="False" />
     <MakeDir Directories="$(MSBuildThisFileDirectory)sitecore\shell\override" Condition="!Exists('$(MSBuildThisFileDirectory)sitecore\shell\override')" />
-
-	<ItemGroup>
-      <XmlTransFormInputs Include="$(SolutionDir)**\code\**\*.transform" />
+    <ItemGroup>
+      <XmlTransFormInputs Include="$(SolutionDir)SitecoreModules\**\*.transform.*;$(SolutionDir)SitecoreModules\**\*.transform;$(SolutionDir)SitecorePackages\**\deploy-*\**\*.transform.*;$(SolutionDir)SitecorePackages\**\deploy-*\**\*.transform" />
+      <XmlTransFormInputs Include="$(SolutionDir)src\**\code\**\*.transform.*;$(SolutionDir)src\**\code\**\*.transform" Exclude="**\bower_components\**;**\node_modules\**" />
     </ItemGroup>
-	
-	<SetTargetConfigs TransformFiles="@(XmlTransFormInputs)" TargetRoot="$(SolutionDir)build\\website">
-		<Output ItemName="XmlTransForms" TaskParameter="TargetFiles" />
-	</SetTargetConfigs>
-	
-	<!--ItemGroup>
-      <XmlTransForms>
-			<TargetConfigFile>$(SolutionDir)build\$([System.String]::Copy('%(XmlTransForms.RecursiveDir)').Substring($([System.String]::Copy('%(XmlTransForms.Filename')).IndexOf('\\code\\')))%(XmlTransForms.Filename)$([System.String]::Copy('%(XmlTransForms.Extension)').Replace('.transform', ''))</TargetConfigFile>
-	  </XmlTransForms>
-    </ItemGroup-->
-	
+	  <MakeDir Directories="$(SolutionDir)build\\data\\packages-autoinstall\completed" />
+    <SetTargetConfigs TransformFiles="@(XmlTransFormInputs)" TargetRoot="$(SolutionDir)build\\website" CheckDeployFolder="$(SolutionDir)build\\data\\packages-autoinstall\completed" SkipSc="$(SkipSitecore)">
+      <Output ItemName="XmlTransForms" TaskParameter="TargetFiles" />
+    </SetTargetConfigs>
     <Message Text="Transforms: @(XmlTransForms)" Importance="high" />
     <Message Text="Targets: %(XmlTransForms.TargetFullPath)" Importance="high" />
     <Message Importance="high" Text="Xml transform: %(XmlTransForms.RecursiveDir)%(XmlTransForms.Filename)%(XmlTransForms.Extension) to %(XmlTransForms.TargetFullPath)" />
+    <TransformXml Source="%(XmlTransForms.TargetFullPath)" Transform="%(XmlTransForms.FullPath)" Destination="%(XmlTransForms.TargetFullPath)" Condition="'%(XmlTransForms.TargetFullPath)' != ''" />
 
     <TransformXml Source="%(XmlTransForms.TargetFullPath)"
               Transform="%(XmlTransForms.FullPath)"
               Destination="%(XmlTransForms.TargetFullPath)"
-			  Condition="'$(%(XmlTransForms.TargetFullPath))' != '' and '$(%(XmlTransForms.FullPath))' != ''"
-	  />
+	      Condition="'%(XmlTransForms.TargetFullPath)' != ''"
+              />
 
   </Target>
   <Target Name="CopySitecoreModule">
-    <Message Text="CopySitecoreModule for $(TargetPath)" Importance="high" />
+    <!--Message Text="CopySitecoreModule for $(TargetPath)" Importance="high" /-->
     <PropertyGroup Condition=" '$(TargetPath)' != '' ">
       <TargetFullPath>$(SolutionDir)Build\Website\$(TargetPath.Substring($(TargetPath.IndexOf('\'))))</TargetFullPath>
     </PropertyGroup>
     <Message Text="CopySitecoreModule $(ItemFullPath) -&gt; $(TargetFullPath)" Importance="high" Condition=" '$(TargetPath)' != '' " />
     <Copy Condition=" '$(TargetPath)' != '' and ( !$(TargetPath.Contains('Views\')) or !Exists('$(TargetFullPath)') )" SourceFiles="$(ItemFullPath)" DestinationFolder="$([System.IO.Path]::GetDirectoryName('$(TargetFullPath)'))" ContinueOnError="true" SkipUnchangedFiles="True" />
+  </Target>
+  <Target Name="CopySitecorePackageFiles">
+    <!--Message Text="CopySitecorePackageFiles for $(TargetPath)" Importance="high" /-->
+    <PropertyGroup Condition=" '$(TargetPath)' != '' ">
+      <ItemPath>$(ItemFullPath.Substring($(ItemFullPath.IndexOf('deploy-'))))</ItemPath>
+      <!-- remove everything from deploy- till next slash: -->
+      <ItemName>$(ItemPath.Substring(7))</ItemName>
+      <ItemName>$(ItemName.Substring(0, $(ItemName.IndexOf('\'))))</ItemName>
+      <TargetFullPath>$(SolutionDir)Build\Website\$(ItemPath.Substring($(ItemPath.IndexOf('\'))))</TargetFullPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <Deploys Condition="'$(TargetPath)' != ''" Include="$(SolutionDir)build\data\packages-autoinstall\completed\$(ItemName).*" />
+    </ItemGroup>
+    <Message Text="CopySitecorePackageFiles $(ItemFullPath) -&gt; $(ItemName) -&gt; $(TargetFullPath) (deploys: '%(Deploys.FullPath)')" Importance="high" Condition=" '$(TargetPath)' != '' " />
+    <Copy Condition=" ('%(Deploys.FullPath)' != '' or '$(SkipSitecore)' == 'True') and '$(TargetPath)' != '' and ( !$(TargetPath.Contains('Views\')) or !Exists('$(TargetFullPath)') )" SourceFiles="$(ItemFullPath)" DestinationFiles="$(TargetFullPath)" ContinueOnError="true" SkipUnchangedFiles="True" />
   </Target>
   <Target Name="Clean">
     <Message Text="Cleaning sitecore installation" />
@@ -279,7 +315,6 @@
     <PropertyGroup>
       <SelectFileOutput>$([System.Guid]::NewGuid().ToString().Replace("{", "").Replace("-", "").Replace("}", ""))</SelectFileOutput>
     </PropertyGroup>
-    <!--Delete Files="@(FilesToDelete)" /-->
     <Message Condition="'$(SkipSitecore)' == 'False' AND !Exists('$(SolutionDir)temp\extracted')" Text="Toolspath: %(SelectFile.FullPath) =&gt; $(SolutionDir)packages\BoC.Sitecore.ProjectStarter.*.*\tools\SelectFile.exe" />
     <Exec Condition="'$(SkipSitecore)' == 'False' AND !Exists('$(SolutionDir)temp\extracted')" command="&quot;%(SelectFile.FullPath)&quot; &quot;Zip files (*.zip)| *.zip&quot; &quot;Select sitecore zip installation&quot; &gt; $(SolutionDir)temp\$(SelectFileOutput)" />
     <PropertyGroup Condition="Exists('$(SolutionDir)temp\$(SelectFileOutput)')">
@@ -322,9 +357,10 @@
     <Delete Condition="Exists('$(SolutionDir)temp\$(SelectFileOutput)')" Files="$(SolutionDir)temp\$(SelectFileOutput)" ContinueOnError="true" />
     <!-- copying modules -->
     <ItemGroup>
-      <DeployModules Include="$(SolutionDir)SitecoreModules\**" />
+      <DeployModules Include="$(SolutionDir)SitecoreModules\**" Exclude="$(SolutionDir)SitecoreModules\**\*.transform.*;$(SolutionDir)SitecoreModules\**\*.transform" />
+      <DeployPackageFiles Include="$(SolutionDir)SitecorePackages\**\deploy-*\**" Exclude="$(SolutionDir)SitecorePackages\**\deploy-*\*.transform.*;$(SolutionDir)SitecorePackages\**\deploy-*\*.transform" />
     </ItemGroup>
     <Msbuild Targets="CopySitecoreModule" Projects="$(MSBuildProjectFile)" Properties="ItemFullPath=%(DeployModules.FullPath);TargetPath=%(DeployModules.RecursiveDir)%(DeployModules.Filename)%(DeployModules.Extension)" />
+    <Msbuild Targets="CopySitecorePackageFiles" Projects="$(MSBuildProjectFile)" Properties="ItemFullPath=%(DeployPackageFiles.FullPath);TargetPath=%(DeployPackageFiles.RecursiveDir)%(DeployPackageFiles.Filename)%(DeployPackageFiles.Extension);CheckPackageInstall=True" />
   </Target>
-  
 </Project>
