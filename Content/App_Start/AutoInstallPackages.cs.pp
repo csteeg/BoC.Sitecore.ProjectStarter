@@ -46,8 +46,12 @@ namespace $rootnamespace$
             if (!System.IO.Directory.Exists(completedfolder))
                 Directory.CreateDirectory(completedfolder);
 
-            var files = Directory.GetFiles(folder, "*.zip", SearchOption.AllDirectories).ToArray();
-            if (files == null || files.Length == 0)
+            var files = new List<string>();
+            var folders = Directory.GetDirectories(folder, "*", SearchOption.TopDirectoryOnly);
+            foreach (var subfolder in folders)
+                files.AddRange(Directory.GetFiles(subfolder, "*.zip", SearchOption.TopDirectoryOnly));
+            
+            if (files == null || !files.Any())
                 return;
             var completedfiles = Directory.GetFiles(completedfolder);
 
