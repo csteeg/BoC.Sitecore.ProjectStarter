@@ -75,10 +75,10 @@ namespace $rootnamespace$
             }
 
             HttpContext.Current.Response.ClearContent();
-            HttpContext.Current.Response.Write(GetHtml(installed, needinstall, proceedUrl, !string.IsNullOrEmpty(HttpContext.Current.Request["projectstarter.proceed"])));
+            HttpContext.Current.Response.Write(GetHtml(installed, needinstall, proceedUrl, !string.IsNullOrEmpty(HttpContext.Current.Request["projectstarter.proceed"]), Sitecore.Context.User.IsAdministrator));
             HttpContext.Current.Response.Flush();
 
-            if (string.IsNullOrEmpty(HttpContext.Current.Request["projectstarter.proceed"]))
+            if (string.IsNullOrEmpty(HttpContext.Current.Request["projectstarter.proceed"]) || !Sitecore.Context.User.IsAdministrator)
             {
                 args.AbortPipeline();
                 HttpContext.Current.Response.Write("</body>");
@@ -101,15 +101,16 @@ namespace $rootnamespace$
 
         }
 
-        private string GetHtml(IEnumerable<string> installed, IEnumerable<string> needinstall, string proceedUrl, bool isProceeding)
+        private string GetHtml(IEnumerable<string> installed, IEnumerable<string> needinstall, string proceedUrl, bool isProceeding, bool isAdmin)
         {
             return "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"> \r\n        <meta charset=\"utf-8\">\r\n<title>Sitecore projectstarter</title>\r\n<link href=\"//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\" rel=\"stylesheet\">\r\n<link href=\"//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css\" type=\"text/css\" rel=\"stylesheet\" /></head>\r\n<body>\r\n<div class=\"container-fluid\">\r\n  <div class=\"row\">\r\n    <div class=\"col-sm-9\">\r\n          \r\n        <h1>Projectstarter</h1>\r\n        \r\n    \t<div class=\"alert alert-info\">\r\n          <h3>Updates required</h3>\r\n          The following modules need to be installed:\r\n<ul>\r\n"
-                   + string.Join("", needinstall.Select(s =>
-                       string.Format(isProceeding && s == needinstall.First() ? "<li><h4><i class=\"fa fa-spinner fa-spin fa-3x fa-fw\"></i>{0}</h4></li>" : "<li>{0}</li>", new FileInfo(s).Name)))
-                   + string.Join("", installed.Select(s => string.Format("<li style=\"text-decoration: line-through;\">{0}</li>", new FileInfo(s).Name)))
-                   + "</ul>\r\n          <br /><br />\r\n"
-                   + (isProceeding ? "" : "<a href=\"" + proceedUrl + "projectstarter.proceed=true\" class=\"btn btn-primary btn-large\" data-toggle=\"popover\" title=\"\" data-placement=\"right\">Proceed</a>")
-                   + "</div>\r\n    </div>\r\n  </div>\r\n  <br>\r\n  \r\n</div>";
+                               + string.Join("", needinstall.Select(s =>
+                                   string.Format(isProceeding && s == needinstall.First() ? "<li><h4><i class=\"fa fa-spinner fa-spin fa-3x fa-fw\"></i>{0}</h4></li>" : "<li>{0}</li>", new FileInfo(s).Name)))
+                               + string.Join("", installed.Select(s => string.Format("<li style=\"text-decoration: line-through;\">{0}</li>", new FileInfo(s).Name)))
+                               + "</ul>\r\n          <br /><br />\r\n"
+                               + (isAdmin ? "" : string.Format("However, you need to <a href=\"/sitecore/admin/login.aspx?ReturnUrl={0}\">sign in to Sitecore as an administrator</a> to be able to auto install these packages with the project starter.</p>", HttpUtility.UrlEncode(HttpContext.Current.Request.Url.PathAndQuery)))
+                               + (isProceeding || !isAdmin ? "" : "<a href=\"" + proceedUrl + "projectstarter.proceed=true\" class=\"btn btn-primary btn-large\" data-toggle=\"popover\" title=\"\" data-placement=\"right\">Proceed</a>")
+                               + "</div>\r\n    </div>\r\n  </div>\r\n  <br>\r\n  \r\n</div>";
         }
 
         protected static void Install(string package)
