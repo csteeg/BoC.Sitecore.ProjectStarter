@@ -14,7 +14,7 @@
 
     <pipelines>
       <httpRequestBegin>
-        <processor type="$rootnamespace$.AutoInstallPackages, $AssemblyName$" patch:before="processor[1]" />
+        <processor type="$rootnamespace$.AutoInstallPackages, $AssemblyName$" patch:after="processor[@type='Sitecore.Pipelines.HttpRequest.DatabaseResolver, Sitecore.Kernel']" />
       </httpRequestBegin>
     </pipelines>
     <settings>
