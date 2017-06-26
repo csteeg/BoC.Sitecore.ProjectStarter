@@ -35,7 +35,7 @@ namespace $rootnamespace$
 
             if (folder.StartsWith("~") || folder.StartsWith("/"))
             {
-                folder = HostingEnvironment.MapPath("~/") + folder.Substring(1).Replace("/", Path.DirectorySeparatorChar.ToString());
+                folder = HostingEnvironment.MapPath("~/") + folder.Substring(folder.StartsWith("~") ? 2 : 1).Replace("/", Path.DirectorySeparatorChar.ToString());
             }
             if (completedfolder.StartsWith("~") || completedfolder.StartsWith("/"))
             {
