@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(MSBuildToolsVersion)\Web\Microsoft.Web.Publishing.Tasks.dll" />
@@ -6,6 +6,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SkipSitecore Condition=" '$(SkipSitecore)' == '' ">False</SkipSitecore>
+    <ForceSitecorePackages Condition=" '$(ForceSitecorePackages)' == '' ">False</ForceSitecorePackages>
     <ProductVersion>
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
@@ -60,12 +61,13 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="bin\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="web.config">
+    <None Include="web.config">
       <SubType>Designer</SubType>
-    </Content>
+    </None>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -194,7 +196,15 @@
 					}
 					codeIndex = relDir.IndexOf("\\", relDir.IndexOf("\\", codeIndex)+1);
 				}
-			} else {
+				else 
+				{
+					codeIndex = relDir.IndexOf("\\SitecoreModules\\");
+					if (codeIndex >= 0)
+					{
+						codeIndex = relDir.IndexOf("\\", relDir.IndexOf("\\SitecoreModules\\")+"\\SitecoreModules\\".Length + 1);
+					}
+				}
+			} else {				
 				 codeIndex += "\\code\\".Length;
 			}
 			var fullPath = Path.Combine(TargetRoot, codeIndex >=0 ? relDir.Substring(codeIndex).TrimStart('\\') : relDir.TrimStart('\\'));
@@ -267,21 +277,15 @@
       <XmlTransFormInputs Include="$(SolutionDir)SitecoreModules\**\*.transform.*;$(SolutionDir)SitecoreModules\**\*.transform;$(SolutionDir)SitecorePackages\**\deploy-*\**\*.transform.*;$(SolutionDir)SitecorePackages\**\deploy-*\**\*.transform" />
       <XmlTransFormInputs Include="$(SolutionDir)src\**\code\**\*.transform.*;$(SolutionDir)src\**\code\**\*.transform" Exclude="**\bower_components\**;**\node_modules\**" />
     </ItemGroup>
-	  <MakeDir Directories="$(SolutionDir)build\\data\\packages-autoinstall\completed" />
-    <SetTargetConfigs TransformFiles="@(XmlTransFormInputs)" TargetRoot="$(SolutionDir)build\\website" CheckDeployFolder="$(SolutionDir)build\\data\\packages-autoinstall\completed" SkipSc="$(SkipSitecore)">
+    <MakeDir Directories="$(SolutionDir)build\\data\\packages-autoinstall\\completed" />
+    <SetTargetConfigs TransformFiles="@(XmlTransFormInputs)" TargetRoot="$(SolutionDir)build\\website" CheckDeployFolder="$(SolutionDir)build\\data\\packages-autoinstall\\completed" SkipSc="$(SkipSitecore)">
       <Output ItemName="XmlTransForms" TaskParameter="TargetFiles" />
     </SetTargetConfigs>
     <Message Text="Transforms: @(XmlTransForms)" Importance="high" />
     <Message Text="Targets: %(XmlTransForms.TargetFullPath)" Importance="high" />
     <Message Importance="high" Text="Xml transform: %(XmlTransForms.RecursiveDir)%(XmlTransForms.Filename)%(XmlTransForms.Extension) to %(XmlTransForms.TargetFullPath)" />
     <TransformXml Source="%(XmlTransForms.TargetFullPath)" Transform="%(XmlTransForms.FullPath)" Destination="%(XmlTransForms.TargetFullPath)" Condition="'%(XmlTransForms.TargetFullPath)' != ''" />
-
-    <TransformXml Source="%(XmlTransForms.TargetFullPath)"
-              Transform="%(XmlTransForms.FullPath)"
-              Destination="%(XmlTransForms.TargetFullPath)"
-	      Condition="'%(XmlTransForms.TargetFullPath)' != ''"
-              />
-
+    <!--TransformXml Source="%(XmlTransForms.TargetFullPath)" Transform="%(XmlTransForms.FullPath)" Destination="%(XmlTransForms.TargetFullPath)" Condition="'%(XmlTransForms.TargetFullPath)' != ''" /-->
   </Target>
   <Target Name="CopySitecoreModule">
     <!--Message Text="CopySitecoreModule for $(TargetPath)" Importance="high" /-->
@@ -304,7 +308,7 @@
       <Deploys Condition="'$(TargetPath)' != ''" Include="$(SolutionDir)build\data\packages-autoinstall\completed\$(ItemName).*" />
     </ItemGroup>
     <Message Text="CopySitecorePackageFiles $(ItemFullPath) -&gt; $(ItemName) -&gt; $(TargetFullPath) (deploys: '%(Deploys.FullPath)')" Importance="high" Condition=" '$(TargetPath)' != '' " />
-    <Copy Condition=" ('%(Deploys.FullPath)' != '' or '$(SkipSitecore)' == 'True') and '$(TargetPath)' != '' and ( !$(TargetPath.Contains('Views\')) or !Exists('$(TargetFullPath)') )" SourceFiles="$(ItemFullPath)" DestinationFiles="$(TargetFullPath)" ContinueOnError="true" SkipUnchangedFiles="True" />
+    <Copy Condition=" ('%(Deploys.FullPath)' != '' or '$(SkipSitecore)' == 'True') and ( ( '$(TargetPath)' != '' and ( !$(TargetPath.Contains('Views\')) or !Exists('$(TargetFullPath)') ) ) or '$(ForceSitecorePackages)' == 'True' )" SourceFiles="$(ItemFullPath)" DestinationFiles="$(TargetFullPath)" ContinueOnError="true" SkipUnchangedFiles="True" />
   </Target>
   <Target Name="Clean">
     <Message Text="Cleaning sitecore installation" />
@@ -329,7 +333,7 @@
     <Message Text="Copying self ($(MSBuildThisFileFullPath)) to $(ExtractedFolder)\website" Condition="'$(SkipSitecore)' == 'False' AND Exists($(ExtractedFolder))" />
     <Move SourceFiles="$(MSBuildThisFileFullPath)" DestinationFolder="$(ExtractedFolder)\website" Condition="'$(SkipSitecore)' == 'False' AND Exists($(ExtractedFolder))" />
     <ItemGroup Condition="'$(SkipSitecore)' == 'True' OR Exists($(ExtractedFolder))">
-      <ClearSitecore Include="$(SolutionDir)build\**\*.*" Exclude="$(SolutionDir)build\website\App_Data\*;$(SolutionDir)build\website\App_Data\**\*;$(SolutionDir)build\data\**\*.*;$(SolutionDir)build\data\*.*;$(SolutionDir)build\website\*.csproj" />
+      <ClearSitecore Include="$(SolutionDir)build\**\*.*" Exclude="$(SolutionDir)build\website\App_Data\*;$(SolutionDir)build\website\App_Data\**\*;$(SolutionDir)build\data\**\*.*;$(SolutionDir)build\data\*.*;$(SolutionDir)build\website\*.csproj;$(SolutionDir)build\website\App_Config\Security\Domains.config" />
     </ItemGroup>
     <Delete Files="@(ClearSitecore)" Condition="'$(SkipSitecore)' == 'True' OR Exists($(ExtractedFolder))" ContinueOnError="True" />
     <Delete Files="@(ClearSitecore)" Condition="'$(SkipSitecore)' == 'True' OR Exists($(ExtractedFolder))" ContinueOnError="True" />
